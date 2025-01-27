@@ -293,8 +293,13 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
+        new_row = new_row.replaceAll('request-mail-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
         new_row = new_row.replaceAll('mail_setting_options', 'hide');
+      } else {
+        if($('#display_request_form')[0].getAttribute("display_request_form") === 'False'){
+          new_row = new_row.replaceAll('request-mail-option', 'hide');
+        }
       }
       $('#tb_action_list').append(new_row);
     }
@@ -390,4 +395,3 @@ $(document).ready(function () {
      }
   })
 });
-

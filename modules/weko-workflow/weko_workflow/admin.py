@@ -31,6 +31,7 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_i18n.ext import current_i18n
+from weko_admin.models import AdminSettings
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -65,6 +66,7 @@ class FlowSettingView(BaseView):
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
         actions = self.get_actions()
+        display_request_form = AdminSettings.get('items_display_settings', {}).get("display_request_form", False)
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -75,7 +77,9 @@ class FlowSettingView(BaseView):
                 users=users,
                 roles=roles,
                 actions=None,
-                action_list=actions
+                action_list=actions,
+                display_request_form=display_request_form,
+                workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -97,7 +101,9 @@ class FlowSettingView(BaseView):
             roles=roles,
             actions=flow.flow_actions,
             action_list=actions,
-            specifed_properties=specified_properties
+            specifed_properties=specified_properties,
+            display_request_form=display_request_form,
+            workflow_request_mail_id = current_app.config.get("WEKO_WORKFLOW_REQUEST_MAIL_ID")
         )
 
     @staticmethod

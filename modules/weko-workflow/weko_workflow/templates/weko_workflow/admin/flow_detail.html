@@ -123,6 +123,8 @@
           </tr>
         </thead>
         <tbody id="tb_action_list">
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        <td id="display_request_form" display_request_form="{{display_request_form}}"></td>
         {%- if actions %}
           {%- for action in actions|sort(attribute='action_order') %}
             <tr id="row_{{action.action_id}}" class="row_{{action.action_id}}">
@@ -154,6 +156,7 @@
                 </div>
               </td>
               <td>
+                aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa3
                 <div class="form-inline" id="form_{{action.action_order}}">
 				          <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order="{{loop.index}}">
                     <option value="0"></option>
@@ -161,6 +164,7 @@
                       <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
                     {%- endfor %}
                     <option class="{%- if action.action.action_name == 'Approval' %}specify-property-option{%- else %}hide{%- endif %}" value="-1">{{_('Specify property')}}</option>
+                    <option class="{%- if action.action.action_name == 'Approval' and display_request_form == True%}request-mail-option{%- else %}hide{%- endif %}" {% if action.action_role.action_request_mail%} selected {% endif %}  value="{{workflow_request_mail_id}}">{{_('Request mail')}}</option>
                     {%- if action.action_role.specify_property %}
                       {%- for specifed in specifed_properties if specifed %}
                         {%- if action.action_role.specify_property == specifed["value"] %}
@@ -260,6 +264,7 @@
             <option value="{{user.id}}">{{user.email}}</option>
           {%- endfor -%}
           <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
+          <option class="request-mail-option" value="{{workflow_request_mail_id}}">{{_('Request mail')}}</option>
         </select>
         <div class="checkbox">
           <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
