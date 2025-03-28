@@ -81,5 +81,29 @@
             ],
             "subitem_checkbox_language": "ja"
         }
+    },
+    {
+        "id": "3",
+        "pid": {
+            "type": "depid",
+            "value": "3",
+            "revision_id": 0
+        },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [
+            1
+        ],
+        "status": "published",
+        "$schema": "/items/jsonschema/1",
+        "pubdate": "2024-09-18",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1
     }
 ]
