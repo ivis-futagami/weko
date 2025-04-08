@@ -4913,8 +4913,8 @@ class TestJsonLdMapper:
                 "attribute_value_mlt": [
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/sample.rst",
-                    "objectType": "abstract"
+                        "url": "https://weko3.example.org/record/2000007/files/sample.rst",
+                        "objectType": "abstract"
                     },
                     "date": [
                     {
@@ -4936,8 +4936,8 @@ class TestJsonLdMapper:
                 },
                 {
                     "url": {
-                    "url": "https://weko3.example.org/record/2000007/files/data.csv",
-                    "objectType": "dataset"
+                        "url": "https://weko3.example.org/record/2000007/files/data.csv",
+                        "objectType": "dataset"
                     },
                     "date": [
                     {
@@ -5115,3 +5115,4 @@ class TestJsonLdMapper:
         rocrate = JsonLdMapper(item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
         ro_crate_metadata = rocrate.metadata.generate()
         print(f"rocrate metadata: {ro_crate_metadata}")
+        # raise Exception

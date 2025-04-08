@@ -1819,6 +1819,29 @@ class JsonLdMapper(JsonMapper):
         Returns:
             dict: metadata with RO-Crate format.
         """
+
+        def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
+            """
+            Args:
+                parent (dict): parent entity
+                key (str): the key vocabulary to assign to the entity.
+                list_at_id (list[str]):
+                    list of identifier of entity. "@id" in entity.
+                at_type (str): type of entity. "@type" in entity.
+                list_data (list[dict] | None):
+                    metadata of entity. Defaults to None.
+            Returns:
+                list[ContextEntity]: created entities.
+            """
+            list_data = list_data or [{} for _ in list_at_id]
+            entities = [
+                entity_factory(at_type)(rocrate, at_id, params)
+                for at_id, params in zip(list_at_id, list_data)
+            ]
+            parent[key] = entities
+            rocrate.add(*entities)
+            return entities
+
         item_map = self._create_item_map(detail=True)
             # e.g. { "Title.タイトル": "item_30001_title0.subitem_title" }
         properties_mapping = {
@@ -1924,27 +1947,7 @@ class JsonLdMapper(JsonMapper):
             rocrate.add(entity)
             return entity
 
-        def add_list_entity(parent, key, list_at_id, at_type, list_data=None):
-            """
-            Args:
-                parent (dict): parent entity
-                key (str): the key vocabulary to assign to the entity.
-                list_at_id (list[str]):
-                    list of identifier of entity. "@id" in entity.
-                at_type (str): type of entity. "@type" in entity.
-                list_data (list[dict] | None):
-                    metadata of entity. Defaults to None.
-            Returns:
-                list[ContextEntity]: created entities.
-            """
-            list_data = list_data or [{} for _ in list_at_id]
-            entities = [
-                entity_factory(at_type)(rocrate, at_id, params)
-                for at_id, params in zip(list_at_id, list_data)
-            ]
-            parent[key] = entities
-            rocrate.add(*entities)
-            return entities
+
 
         def append_entity(parent, key, at_id, at_type, data=None, **kwargs):
             """
@@ -2044,7 +2047,7 @@ class JsonLdMapper(JsonMapper):
             Returns:
                 str: "@type" of entity.
             """
-            for k, v in self.item_map.items():
+            for k, v in item_map.items():
                 if v == meta_path:
                     meta_key = k
                     break
@@ -2055,7 +2058,7 @@ class JsonLdMapper(JsonMapper):
             return "PropertyValue"
 
         def _set_rocrate_metadata(
-            parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed
+            parent, META_PATH, META_KEY, meta_props, PROP_PATH, prop_props, deconstructed, record_key
         ):
             # Get list_index
             list_index = extract_list_indices(meta_props, prop_props, properties_mapping)
@@ -2068,7 +2071,7 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 index = list_index[0] if list_index else None
                 prop = prop_props[0]
-                at_type = gen_type()
+                at_type = gen_type(META_PATH)
                 # at_type = type_map[prop] if prop in type_map else "PropertyValue"
 
                 # dict
@@ -2078,11 +2081,11 @@ class JsonLdMapper(JsonMapper):
                         pass
                     # If prop is under root, add property directly.
                     else:
-                        parent[prop] = deconstructed[META_KEY]
+                        parent[prop] = deconstructed[record_key]
                 # list
                 else:
                     ensure_entity_list_size(parent, prop, at_type, index + 1)
-                    parent[prop][index] = deconstructed[META_KEY]
+                    parent[prop][index] = deconstructed[record_key]
 
                 return
 
@@ -2108,7 +2111,7 @@ class JsonLdMapper(JsonMapper):
                     if prop == "@id":
                         pass
                     else:
-                        parent[prop] = deconstructed[META_KEY]
+                        parent[prop] = deconstructed[record_key]
                         rocrate.add(parent)
                 else:
                     if "@id" in prop_props:
@@ -2135,7 +2138,7 @@ class JsonLdMapper(JsonMapper):
                         list_val.extend(
                             ["" for _ in range(index - len(list_val) + 1)]
                         )
-                    list_val[index] = deconstructed[META_KEY]
+                    list_val[index] = deconstructed[record_key]
                     parent[prop] = list_val
                     rocrate.add(parent)
                 else:
@@ -2153,21 +2156,41 @@ class JsonLdMapper(JsonMapper):
             return
 
         deconstructed = self._deconstruct_dict(metadata)
+        # print("deconstructed")
+        # print(deconstructed)
+        # print("json_mapping")
+        # print(self.json_mapping)
+        # print("item_map")
+        # print(item_map)
+        # print("prop_mapping")
+        # print(properties_mapping)
 
         for record_key in deconstructed:
             if "attribute_value" not in record_key:
                 continue
 
             META_PATH = re.sub(r"\[\d+\]", "", record_key)
+            META_PATH = META_PATH.replace(
+                ".attribute_value_mlt", "").replace(".attribute_value", "")
             META_KEY = record_key.replace(
                 ".attribute_value_mlt", "").replace(".attribute_value", "")
             meta_props = META_KEY.split(".")
+            # print(2170)
+            # print(record_key)
+            # print(META_PATH)
+            # print(META_KEY)
+            # if META_PATH == "pubdate.attribute_value" or META_PATH == "pubdate":
+            #     continue
+            if META_PATH not in properties_mapping:
+                print(2190)
+                print(META_PATH)
+                continue
             PROP_PATH = properties_mapping[META_PATH] # attribute_value
             prop_props = PROP_PATH.split(".")
 
             _set_rocrate_metadata(
                 rocrate.root_dataset, META_PATH, META_KEY, meta_props,
-                PROP_PATH, prop_props, deconstructed
+                PROP_PATH, prop_props, deconstructed, record_key
             )
 
         # Extra
