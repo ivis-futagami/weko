@@ -37,6 +37,23 @@ class WekoLoggingFS(WekoLoggingBase):
         self.install_handler(app)
         app.extensions["weko-logging-fs"] = self
 
+        self.init_logger(app)
+
+    def init_logger(self, app):
+        import logging
+        format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
+                '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        formatter = logging.Formatter(fmt=format, datefmt=datefmt)
+
+        app.logger.setLevel("DEBUG")
+        if app.logger.handlers:
+            # if app.logger has handlers, set level and formatter
+            for h in app.logger.handlers:
+                h.setLevel("DEBUG")
+
+                h.setFormatter(formatter)
+
     def init_config(self, app):
         """
         Initialize configuration.

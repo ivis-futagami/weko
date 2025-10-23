@@ -1,6 +1,7 @@
 import pytest
 import xmltodict
 import uuid
+import json
 from datetime import date
 from mock import patch
 from unittest.mock import MagicMock
@@ -4808,9 +4809,10 @@ class TestJsonLdMapper:
 
     # def deconstruct_json_ld(json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test__deconstruct_json_ld -v -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test__deconstruct_json_ld(self, app):
+    def test__deconstruct_json_ld(self, app, item_type2):
         json_ld = json_data("data/jsonld/ro-crate-metadata.json")
-        deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        mapper = JsonLdMapper(item_type2.model.id, None)
+        deconstructed_metadata, format = mapper._deconstruct_json_ld(json_ld)
         metadata, system_info =  deconstructed_metadata[0]
 
         assert format == "ro-crate"
@@ -4837,7 +4839,8 @@ class TestJsonLdMapper:
         assert not any("@type" in key for key in metadata.keys())
 
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
-        deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld(json_ld)
+        mapper = JsonLdMapper(item_type2.model.id, None)
+        deconstructed_metadata, format = mapper._deconstruct_json_ld(json_ld)
         thesis, system_info =  deconstructed_metadata[0]
 
         assert format == "ro-crate"
@@ -4865,7 +4868,8 @@ class TestJsonLdMapper:
         assert evidence["dc:type.@id"] == "http://purl.org/coar/resource_type/c_1843"
 
         with pytest.raises(ValueError) as ex:
-            deconstructed_metadata, format = JsonLdMapper._deconstruct_json_ld({})
+            mapper = JsonLdMapper(item_type2.model.id, None)
+            deconstructed_metadata, format = mapper._deconstruct_json_ld({})
         ex.match('Invalid json-ld format: "@context" is invalid.')
 
     # def to_rocrate_metadata(self, metadata):
@@ -5240,3 +5244,57 @@ class TestJsonLdMapper:
             assert item_metadata["item_1736145554459"]["subitem_date_issued_datetime"] == "2025-06-11"
             assert item_metadata["item_1749689698804"]["subitem_relation_type_id"]["subitem_relation_type_id_text"] == "grdm"
             assert item_metadata["item_1749689698804"]["subitem_relation_type"] == "isVersionOf"
+
+
+    # def drop_metadata(self, list_extracted):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_drop_metadata -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_drop_metadata(self, app, db, item_type2, mocker):
+        mapper = JsonLdMapper(item_type2.model.id, None)
+        values = ["first", "second"]
+        mocker.patch.object(mapper, "extract_text_from_files",
+                            side_effect = values)
+
+        rocrate = json_data("data/ams/with_two_extended_metadata.json")
+        rocrate = mapper.drop_metadata([rocrate])[0]
+
+        ids = [part["@id"]
+               for part in rocrate.get("hasPart", [])
+               if "@id" in part]
+        assert ids == ["data/pp.pptx"]
+
+        ext = rocrate["extended_metadata"]["value"]
+        ext = json.loads(ext)
+
+        assert len(ext) == 2
+        assert ext["data/sample.txt"] == "first"
+        assert ext["data/guide.pdf"] == "second"
+
+        # without hasPart
+        rocrate = json_data("data/ams/without_hasPart.json")
+        rocrate = mapper.drop_metadata([rocrate])[0]
+        assert "extended_metadata" not in rocrate
+
+    # def extract_text_from_files(self, filename):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_extract_text_from_files -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_extract_text_from_files(self, app, db, item_type2, mocker):
+        mapper = JsonLdMapper(item_type2.model.id, None)
+        mapper.data_path = "tests/data/ams"
+        extract_text = mapper.extract_text_from_files("sample.txt")
+        assert extract_text == "This is a\ntext file.\n"
+
+        mocker.patch("weko_search_ui.mapper.extract_text_from_pdf",
+                     return_value="This is a pdf file.")
+        extract_text = mapper.extract_text_from_files("pdffile.pdf")
+        assert extract_text == "This is a pdf file."
+
+        mocker.patch("weko_search_ui.mapper.extract_text_with_tika",
+                     return_value="This is a pptx file.")
+        extract_text = mapper.extract_text_from_files("powerpoint.pptx")
+        assert extract_text == "This is a pptx file."
+
+        extract_text = mapper.extract_text_from_files("sample.other")
+        assert extract_text == ""
+
+        with pytest.raises(FileNotFoundError) as e:
+            extract_text = mapper.extract_text_from_files("not_exist.txt")
+        assert str(e.value) == "File Not Found: not_exist.txt"

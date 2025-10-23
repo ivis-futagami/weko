@@ -10,6 +10,9 @@
 
 import os
 import re
+import json
+import chardet
+import mimetypes
 import itertools
 import xmltodict
 import traceback
@@ -26,6 +29,7 @@ from weko_records.api import (
     Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
 )
 from weko_records.serializers.utils import get_full_mapping
+from weko_deposit.utils import extract_text_from_pdf, extract_text_with_tika
 
 from .config import ROCRATE_METADATA_FILE, ROCRATE_METADATA_WK_CONTEXT_V1
 
@@ -1417,6 +1421,27 @@ class JsonLdMapper(JsonMapper):
 
         return list_items, format
 
+    def drop_metadata(self, list_extracted):
+
+        for extracted in list_extracted:
+            if 'hasPart' not in extracted:
+                continue
+            file_indices = [
+                idx for idx, item in enumerate(extracted['hasPart'])
+                if item.get('wk:extendedMetadata')
+            ]
+            extended_metadatas = {}
+            extracted['extended_metadata'] = {}
+            for idx in reversed(file_indices):
+                filename = extracted['hasPart'].pop(idx).get('@id')
+                content = self.extract_text_from_files(filename)
+                extended_metadatas[filename] = content
+
+            extracted['extended_metadata']['value'] = json.dumps(
+                extended_metadatas, ensure_ascii=False)
+
+        return list_extracted
+
     def _map_to_item(self, metadata, system_info):
         """Map json-ld to item type metadata.
 
@@ -1659,8 +1684,7 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata, system_info
 
-    @classmethod
-    def _deconstruct_json_ld(cls, json_ld):
+    def _deconstruct_json_ld(self, json_ld):
         """Deconstruct json-ld.
 
         Deconstructing json-ld metadata values ​​one by one
@@ -1773,9 +1797,11 @@ class JsonLdMapper(JsonMapper):
         else:
             list_extracted = [ extracted ]
 
+        self.drop_metadata(list_extracted)
+
         list_deconstructed = []
         for extracted in list_extracted:
-            metadata = cls._deconstruct_dict(extracted)
+            metadata = self._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
                 {"id": extracted["identifier"]}
@@ -2351,3 +2377,36 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:metadataAutoFill"] = False
 
         return rocrate
+
+
+    def extract_text_from_files(self, filename):
+        """aaa"""
+        data_path = self.data_path
+        try:
+            data = ""
+            mimetype = mimetypes.guess_type(filename)[0]
+            file_size_limit = current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']
+            # List of text-based MIME types allowed for text extraction and processing.
+            text_mimetypes = current_app.config["WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"]
+            # All mimetypes subject to text extraction (including text_mimetypes)
+            extract_mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
+            if mimetype not in extract_mimetypes:
+                return data
+
+            # Extract content from file
+            current_app.logger.debug(f"extracting content from {filename}")
+            filepath = data_path + "/" + filename
+            if mimetype in text_mimetypes:
+                with open(filepath, "rb") as fp:
+                    data = fp.read(file_size_limit)
+                inf = chardet.detect(data)
+                data = data.decode(inf["encoding"], errors="replace")
+            elif mimetype == 'application/pdf':
+                data = extract_text_from_pdf(filepath, file_size_limit)
+            else:
+                data = extract_text_with_tika(filepath, file_size_limit)
+        except FileNotFoundError as e:
+            current_app.logger.error(f"FileNotFoundError: {e}")
+            traceback.print_exc()
+            raise FileNotFoundError(f"File Not Found: {filename}") from e
+        return data

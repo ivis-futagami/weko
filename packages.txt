@@ -187,4 +187,5 @@ netaddr==0.8.0
 marshmallow-sqlalchemy==0.23.1
 flask-marshmallow==0.14.0
 sword3common==0.1.1
-
+schema-salad==8.4.20230808163024
+pypdfium2==4.30.0
