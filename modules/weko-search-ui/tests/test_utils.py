@@ -405,7 +405,7 @@ def test_check_tsv_import_items(i18n_app):
     file = TestFile()
     assert check_tsv_import_items(file, True, True)
 
-    time.sleep(1)
+    time.sleep(0.1)
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
     prefix = current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
@@ -533,7 +533,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     with i18n_app.test_request_context():
         broken_file_name = "sample_zip_broken.zip"
         broken_file_path = os.path.join('tests', "data", "jpcoar", "v2", broken_file_name)
-        time.sleep(2)
+        time.sleep(0.1)
         result = check_xml_import_items(broken_file_path, item_type.id)
         assert result["error"] == "The format of the specified file sample_zip_broken.zip does not support import." \
             " Please specify one of the following formats: zip, tar, gztar, bztar, xztar."
@@ -541,7 +541,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     # Case04: Xml files not included
     with i18n_app.test_request_context():
         zip_file_path = os.path.join('tests', "data", "helloworld.zip")
-        time.sleep(2)
+        time.sleep(0.1)
         result = check_xml_import_items(zip_file_path, item_type.id)
         assert result["error"] ==  "The xml file was not found in the specified file helloworld.zip." \
             " Check if the directory structure is correct."
@@ -549,7 +549,7 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     with i18n_app.test_request_context():
         failed_file_name = "no_jpcoar_xml_file.zip"
         failed_file_path = os.path.join('tests', "data", "jpcoar", "v2", failed_file_name)
-        time.sleep(2)
+        time.sleep(0.1)
         print("Case04")
         result = check_xml_import_items(failed_file_path, item_type.id)
         assert result["error"] ==  "The xml file was not found in the specified file no_jpcoar_xml_file.zip." \
@@ -559,21 +559,21 @@ def test_check_xml_import_items(i18n_app, db_itemtype_jpcoar):
     # Case05: UnicodeDecodeError occured
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=lambda x,y: "foo".encode('utf-16').decode('utf-8')):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "invalid start byte"
 
     # Case06: Other exception occured (without args)
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception()):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "Internal server error"
 
     # Case07: Other exception occured (with args)
     with i18n_app.test_request_context():
         with patch("weko_search_ui.utils.handle_check_file_metadata", side_effect=Exception({"error_msg": "error_msg_sample"})):
-            time.sleep(2)
+            time.sleep(0.1)
             result = check_xml_import_items(file_path, item_type.id)
             assert result["error"] == "error_msg_sample"
 
@@ -707,6 +707,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert "data_path" not in result
         assert "item_type_id" not in result
         assert "list_record" not in result
+        time.sleep(0.1)
 
     with patch("weko_search_ui.utils.bagit.Bag.validate",side_effect=bagit.BagValidationError("Bag validation error")):
         result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1, validate_bagit=False)
@@ -929,7 +930,8 @@ def test_handle_convert_validate_msg_to_jp(i18n_app):
 
 
 # def handle_validate_item_import(list_record, schema) -> list:
-def test_handle_validate_item_import(app, mocker_itemtype):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_validate_item_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data", "csv", "data.json"
     )
@@ -963,6 +965,96 @@ def test_handle_validate_item_import(app, mocker_itemtype):
                 == result
             )
 
+    schema = {
+        "type": "object",
+        "properties": {
+            "item_xxx": {
+                "type": "object",
+                "properties": {
+                    "subitem_yyy": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "subitem_zzz": {
+                                    "type": "string",
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    list_record = [
+        {   
+            "metadata": {
+                'item_xxx': {
+                    'subitem_yyy':[ 
+                        {"subitem_zzz": 123}
+                    ]
+                }
+            }
+        }
+    ]
+    with app.test_request_context():
+        with set_locale("en"):
+            result = handle_validate_item_import(list_record, schema)
+            warnings = result[0].get("warnings", [])
+            target = list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"]
+            assert any("Replace value of" in w for w in warnings)
+            assert any("is different from existing" in w for w in warnings)
+            assert type(target) == str
+
+    list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"] = 456
+
+    with app.test_request_context():
+        with set_locale("ja"):
+            result = handle_validate_item_import(list_record, schema)
+            warnings = result[0].get("warnings", [])
+            assert any("へ置き換えました。" in w for w in warnings)
+            assert any("と異なっています。" in w for w in warnings)
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "item_aaa": {
+                "type": "object",
+                "properties": {
+                    "subitem_bbb": {
+                        "type": "object",
+                        "properties": {
+                            "subitem_ccc": {
+                                "enum": [None, "Yes|Yes", "No|No"],
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    list_record = [
+        {   
+            "metadata": {
+                'item_aaa': {
+                    'subitem_bbb': {
+                        "subitem_ccc": "Yes"
+                    }
+                }
+            }
+        }
+    ]
+    with app.test_request_context():
+        with set_locale("en"):
+            result = handle_validate_item_import(list_record, schema)
+            assert "errors" in result[0]
+            
+    with app.test_request_context():
+        with set_locale("ja"):
+            result = handle_validate_item_import(list_record, schema)
+            assert "errors" in result[0]
 
 # def represents_int(s):
 def test_represents_int():

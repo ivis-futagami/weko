@@ -69,8 +69,8 @@ services:
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
-      - FLASK_ENV=development
-      # - FLASK_ENV=production
+      # - FLASK_ENV=development
+      - FLASK_ENV=production
       # - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       #- INVENIO_DB_POOL_CLASS=QueuePool
@@ -311,11 +311,14 @@ services:
 
   pgpool:
     restart: "always"
-    image: bitnami/pgpool
+    image: pgpool/pgpool:4.2.2
     environment:
-      - PGPOOL_BACKEND_NODES=0:postgresql:5432
-      - PGPOOL_SR_CHECK_USER=invenio
-      - PGPOOL_SR_CHECK_PASSWORD=dbpass123
+      - PGPOOL_PARAMS_BACKEND_HOSTNAME0=postgresql
+      - PGPOOL_PARAMS_BACKEND_PORT0=5432
+      - PGPOOL_PARAMS_BACKEND_WEIGHT0=1
+      - PGPOOL_PARAMS_SR_CHECK_USER=invenio
+      - PGPOOL_PARAMS_SR_CHECK_PASSWORD=dbpass123
+      - PGPOOL_PARAMS_PORT=5432
       - PGPOOL_ENABLE_LDAP=no
       - PGPOOL_POSTGRES_USERNAME=postgres
       - PGPOOL_POSTGRES_PASSWORD=dbpass123
@@ -378,6 +381,10 @@ services:
       resources:
         limits:
           memory: 300m
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+    extra_hosts:
+      - mebyo.ir.rcos.nii.ac.jp:127.0.0.1
 
 #  certbot:
 #    image: certbot/certbot:latest
@@ -452,4 +459,3 @@ volumes:
   mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
-
