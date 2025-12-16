@@ -17,9 +17,10 @@ export default defineNuxtConfig({
   css: ['@/assets/sass/styles.scss'],
   ssr: false,
   app: {
+    buildAssetsDir: '/ams/_nuxt/',
     head: {
       htmlAttrs: { lang: 'ja' },
-      title: 'AMS-alpha',
+      title: 'Mebyo Data Catalog DB',
       meta: [
         { charset: 'utf-8' },
         { name: 'keywords', content: '' },
@@ -43,8 +44,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      clientId: 'qIx5G7vr9ZF8Fy4171xUSaG5ZVd51FdHCDrl8oM7',
-      redirectURI: 'http://localhost:3000',
+      clientId: 'kwzzqZnjLxhI7C4lTfGY4SC25SeiCf6PTVaMlOOU',
+      redirectURI: 'https://mebyo.ir.rcos.nii.ac.jp/',
       apiTimeout: 10000, // api response timeout (ms)
       tokenRefreshLimit: 600, // refresh access token before time (s)
       contact: {
@@ -54,7 +55,7 @@ export default defineNuxtConfig({
         display: 5 // number of items displayed in DL ranking
       }
     },
-    clientSecret: 'LLwKok4nIrOs1Kn44IrDWJFIOdiAGGgDHVlbC1QCu4Vc8jQRjuPSXSxJjQw0',
+    clientSecret: 'cTrXEd1ZaNzJNwlzRgHJdreaLV8UiHLMKLILgxAP318wz1t3TXspneL21Bgd',
     // email setting for contact
     contact: {
       to: 'sample@sample.co.jp',
