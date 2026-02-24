@@ -25,6 +25,7 @@ services:
     restart: "always"
     build:
       context: .
+    image: weko-web
       #target: stage_7
     sysctls:
       net.core.somaxconn: 1024
@@ -79,6 +80,7 @@ services:
       - /code/modules/invenio-accounts/invenio_accounts.egg-info
       - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-indexer/invenio_indexer.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
@@ -135,7 +137,7 @@ services:
 
   worker:
     restart: "always"
-    image: weko3_b_web
+    image: weko-web
     depends_on:
       - web
     sysctls:
@@ -190,6 +192,7 @@ services:
       - /code/modules/invenio-accounts/invenio_accounts.egg-info
       - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
       - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+      - /code/modules/invenio-indexer/invenio_indexer.egg-info
       - /code/modules/invenio-s3/invenio_s3.egg-info
       - /code/modules/invenio-oaiharvester/invenio_oaiharvester.egg-info
       - /code/modules/invenio-oaiserver/invenio_oaiserver.egg-info
@@ -344,4 +347,3 @@ volumes:
   es-data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
-
