@@ -74,8 +74,12 @@
             </div>
             <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
               <button @click="openDataSet">
+              <center>
                 <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
+                <br/><div>Access GakuNinRDM project</div>
+                </center>
               </button>
+              
             </div>
           </div>
           <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->
@@ -97,12 +101,14 @@
             </div>
           </div>
           <!-- ダウンロードランキング -->
+          <!--
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-dl-rank text-white font-bold">
               {{ $t('detailDLRank') }}
             </p>
           </div>
           <DownloadRank v-if="renderFlag && !isError" :current-number="currentNumber" @error="setError" />
+          -->
           <!-- エクスポート -->
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-export text-white font-bold">
