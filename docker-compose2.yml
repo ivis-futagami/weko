@@ -33,6 +33,7 @@
 
 services:
   web:
+    image: weko-web:1.0.8b
     restart: "always"
     build:
       context: .
@@ -170,7 +171,7 @@ services:
     build:
       context: .
       #target: stage_1
-    # image: weko-web
+    image: weko-web:1.0.8b
     # depends_on:
     #   - web
     sysctls:
@@ -300,7 +301,7 @@ services:
       - pgsql-data:/var/lib/postgresql/data
     ports:
       #- "25401:5432"
-      - "5432"
+      - "5432:5432"
 
   pgpool:
     restart: "always"
@@ -335,6 +336,7 @@ services:
           memory: 100m
 
   elasticsearch:
+    image: weko-elasticsearch:1.0.8b
     restart: "always"
     build:
       context: .
@@ -357,6 +359,7 @@ services:
       - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
 
   nginx:
+    image: weko-nginx:1.0.8b
     restart: "always"
     build: ./nginx
     ports:
