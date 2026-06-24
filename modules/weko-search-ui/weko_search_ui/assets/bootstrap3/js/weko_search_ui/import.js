@@ -229,7 +229,7 @@ class MainLayout extends React.Component {
     var csrf_token = $('#csrf_token').val();
     $.ajaxSetup({
       beforeSend: function (xhr, settings) {
-                if (!(/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) && !this.crossDomain) {
+        if (!(/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) && !this.crossDomain) {
           xhr.setRequestHeader("X-CSRFToken", csrf_token);
         }
       }
@@ -373,7 +373,7 @@ class MainLayout extends React.Component {
       .done((res) => {
 
         that.setState({
-                    tasks: res.result
+          tasks: res.result
         })
         if (res.status === 'done') {
           that.setState({
@@ -391,16 +391,16 @@ class MainLayout extends React.Component {
   }
 
   render() {
-        const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking } = this.state;
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking } = this.state;
     return (
       <div>
         <ul className="nav nav-tabs">
           {
             tabs.map((item, key) => {
               return (
-                                <li role="presentation" className={`${item.tab_key === tab ? 'active' : ''}`} onClick={() => this.handleChangeTab(item.tab_key)}>
-                                    <button>{item.tab_name}</button>
-                                </li>
+                <li role="presentation" className={`${item.tab_key === tab ? 'active' : ''}`} onClick={() => this.handleChangeTab(item.tab_key)}>
+                  <button>{item.tab_name}</button>
+                </li>
               )
             })
           }
@@ -835,11 +835,11 @@ class TreeNode extends React.Component {
     return (
       <div className="tree-node">
         <div
-                    role="button"
-                    tabIndex={0}
+          role="button"
+          tabIndex={0}
           className={`folding ${data.children.length ? isCollabsed ? 'node-collapsed' : 'node-expanded' : 'weko-node-empty'}`}
           onClick={() => { data.children.length && this.handleShow() }}
-                    onKeyDown={() => { }}
+          onKeyDown={() => { }}
         >
         </div>
         <div className='node-value'>
@@ -1169,12 +1169,12 @@ class ResultComponent extends React.Component {
         [importResult]: getTaskResult(item.task_result),
         [action]: item.task_result ? (item.task_result.success ? end : (item.task_status && item.task_status === "STARTED") ? "Started" : "Error") : "Start",
         [workflow_status]: item.task_status ?
-            item.task_status === "PENDING" ? to_do :
+          item.task_status === "PENDING" ? to_do :
             item.task_status === "STARTED" ? doing :
-            (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done :
-            (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) :
-            item.task_status === "FAILURE" ? "FAILURE" :
-          '' :
+              (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done :
+                (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) :
+                  item.task_status === "FAILURE" ? "FAILURE" :
+                    '' :
           ''
       }
     })
@@ -1262,12 +1262,12 @@ class ResultComponent extends React.Component {
                       <td>
                         {item.task_status ?
                           item.task_status === "PENDING" ? to_do :
-                          item.task_status === "STARTED" ? doing :
-                          (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done :
-                          (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) :
-                          item.task_status === "FAILURE" ? "FAILURE" :
-                        '' :
-                        ''}
+                            item.task_status === "STARTED" ? doing :
+                              (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done :
+                                (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) :
+                                  item.task_status === "FAILURE" ? "FAILURE" :
+                                    '' :
+                          ''}
                       </td>
                       <td>{getTaskStatusLabel(item.task_status)}</td>
                       <td>{getTaskResult(item.task_result)}</td>
