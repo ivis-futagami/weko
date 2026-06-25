@@ -29,10 +29,11 @@
 # either expressed or implied, of the FreeBSD Project.
 
 
-version: "3.2"
+# version: "3.2"
 
 services:
   web:
+    image: weko-web:2.0.2
     restart: "always"
     build:
       context: .
@@ -174,7 +175,7 @@ services:
     build:
       context: .
       #target: stage_1
-    # image: weko-web
+    image: weko-web:2.0.2
     # depends_on:
     #   - web
     sysctls:
@@ -307,7 +308,7 @@ services:
       - pgsql-data:/var/lib/postgresql/data
     ports:
       #- "25401:5432"
-      - "5432"
+      - "5432:5432"
 
   pgpool:
     restart: "always"
@@ -342,6 +343,7 @@ services:
           memory: 100m
 
   elasticsearch:
+    image: weko-elasticsearch:2.0.2
     restart: "always"
     build:
       context: .
@@ -364,6 +366,7 @@ services:
       - "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit consumer_timeout 10800000"
 
   nginx:
+    image: weko-nginx:2.0.2
     restart: "always"
     build: ./nginx
     ports:
@@ -455,4 +458,3 @@ volumes:
   mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
-

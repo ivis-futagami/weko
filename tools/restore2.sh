@@ -38,7 +38,16 @@ BACKUPDIR=$1
 docker-compose -f docker-compose2.yml exec -T web invenio db drop --yes-i-know
 docker-compose -f docker-compose2.yml exec -T web invenio db init
 docker-compose -f docker-compose2.yml exec -T web invenio db create -v
+docker-compose -f docker-compose2.yml exec -T web invenio stats partition create $(date +%Y)
+docker-compose -f docker-compose2.yml exec -T web invenio stats partition create $(date -d 'year' +%Y)
+docker-compose -f docker-compose2.yml exec -T web invenio logging partition create $(date +%Y)
+docker-compose -f docker-compose2.yml exec -T web invenio logging partition create $(date -d 'year' +%Y)
 # create-database-end
+
+docker cp scripts/demo/fix_lang_code_column.sql $(docker compose -f docker-compose2.yml ps -q postgresql):/tmp/fix_lang_code_column.sql
+docker compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/fix_lang_code_column.sql
+docker cp postgresql/ddl/W-OA-user_activity_log.sql $(docker compose -f docker-compose2.yml ps -q postgresql):/tmp/W-OA-user_activity_log.sql
+docker compose -f docker-compose2.yml exec postgresql psql -U invenio -d invenio -f /tmp/W-OA-user_activity_log.sql
 
 # postgresql-restore-begin
 if [ -f ${BACKUPDIR}/postgresql/weko.sql.gz ]; then
@@ -78,8 +87,8 @@ docker-compose -f docker-compose2.yml exec -T elasticsearch \
     curl -XPOST \
     http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true \
     -H 'content-type: application/json' \
-    -d '{ 
-            "indices": "*", 
+    -d '{
+            "indices": "*",
             "ignore_unavailable": true,
             "include_global_state": true
         }'
@@ -89,7 +98,7 @@ docker-compose -f docker-compose2.yml start
 
 # contents-restore-begin
 if [ -d "${BACKUPDIR}/contents" ]; then
-    sudo chown -R 1000:1000 ${BACKUPDIR}/contents
+    # sudo chown -R 1000:1000 ${BACKUPDIR}/contents
     docker-compose -f docker-compose2.yml exec -T web rm -fr /var/tmp/*
     docker cp ${BACKUPDIR}/contents/tmp/. $(docker-compose -f docker-compose2.yml ps -q web):/var/tmp
 fi
@@ -97,7 +106,7 @@ fi
 
 # data-restore-begin
 if [ -d "${BACKUPDIR}/data" ]; then
-    sudo chown -R 1000:1000 ${BACKUPDIR}/data
+    # sudo chown -R 1000:1000 ${BACKUPDIR}/data
     docker-compose -f docker-compose2.yml exec -T web rm -fr /home/invenio/.virtualenvs/invenio/var/instance/data/*
     docker cp ${BACKUPDIR}/data/. $(docker-compose ps -q web):/home/invenio/.virtualenvs/invenio/var/instance/data
 fi
@@ -110,4 +119,3 @@ fi
 #    docker cp ${BACKUPDIR}/conf/. $(docker-compose -f docker-compose2.yml ps -q web):/home/invenio/.virtualenvs/invenio/var/instance/conf
 #fi
 ## conf-restore-end
-
