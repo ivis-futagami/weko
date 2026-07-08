@@ -102,7 +102,7 @@ fi
 if [ -d "${BACKUPDIR}/data" ]; then
     # sudo chown -R 1000:1000 ${BACKUPDIR}/data
     docker-compose -f docker-compose2.yml exec -T web rm -fr /home/invenio/.virtualenvs/invenio/var/instance/data/*
-    docker cp ${BACKUPDIR}/data/. $(docker-compose ps -q web):/home/invenio/.virtualenvs/invenio/var/instance/data
+    docker cp ${BACKUPDIR}/data/. $(docker-compose -f docker-compose2.yml ps -q web):/home/invenio/.virtualenvs/invenio/var/instance/data
 fi
 # data-restore-end
 
