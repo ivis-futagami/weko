@@ -38,10 +38,11 @@ BACKUPDIR=$1
 docker-compose -f docker-compose2.yml exec -T web invenio db drop --yes-i-know
 docker-compose -f docker-compose2.yml exec -T web invenio db init
 docker-compose -f docker-compose2.yml exec -T web invenio db create -v
-docker-compose -f docker-compose2.yml exec -T web invenio stats partition create $(date +%Y)
-docker-compose -f docker-compose2.yml exec -T web invenio stats partition create $(date -d 'year' +%Y)
-docker-compose -f docker-compose2.yml exec -T web invenio logging partition create $(date +%Y)
-docker-compose -f docker-compose2.yml exec -T web invenio logging partition create $(date -d 'year' +%Y)
+docker compose -f docker-compose2.yml exec -T web invenio stats partition create $(date +%Y)
+docker compose -f docker-compose2.yml exec -T web invenio stats partition create $(date -d 'year' +%Y)
+docker compose -f docker-compose2.yml exec -T web invenio logging partition create $(date +%Y)
+docker compose -f docker-compose2.yml exec -T web invenio logging partition create $(date -d 'year' +%Y)
+docker compose -f docker-compose2.yml exec -T web invenio index queue init
 # create-database-end
 
 docker cp scripts/demo/fix_lang_code_column.sql $(docker compose -f docker-compose2.yml ps -q postgresql):/tmp/fix_lang_code_column.sql
